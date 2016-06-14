@@ -1,10 +1,13 @@
 require "spec_helper"
+require "support/expect_api_call"
 
-describe Lita::Adapters::Slack::IMMapping do
+describe Lita::Adapters::Slack::IMMapping, lita: true do
   subject { described_class.new(api, ims) }
 
-  let(:api) { instance_double('Lita::Adapters::Slack::API') }
+  include ExpectApiCall
+
   let(:im) { Lita::Adapters::Slack::SlackIM.new('D1234567890', 'U023BECGF') }
+  let(:api) { Lita::Adapters::Slack::API.new(adapter.config) }
 
   describe "#im_for" do
     context "when a mapping is already stored" do
@@ -17,7 +20,7 @@ describe Lita::Adapters::Slack::IMMapping do
 
     context "when a mapping is not yet stored" do
       before do
-        allow(api).to receive(:im_open).with('U023BECGF').and_return(im).once
+        expect_api_call("im.open", user: 'U023BECGF', response: { "ok" => true, "channel" => { "id" => 'D1234567890' }})
       end
 
       let(:ims) { [] }

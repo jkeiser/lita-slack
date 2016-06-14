@@ -21,9 +21,9 @@ gem "lita-slack"
 
 ### Optional attributes
 
+* `proxy` (String) – Specify a HTTP proxy URL. (e.g. "http://squid.example.com:3128")
 * `link_names` (Boolean) – Set to `true` to turn all Slack usernames in messages sent by Lita into links.
 * `parse` (String) – Specify the parsing mode. See https://api.slack.com/docs/formatting#parsing_modes.
-* `proxy` (String) – Specify a HTTP proxy URL. (e.g. "http://squid.example.com:3128")
 * `unfurl_links` (Boolean) – Set to `true` to automatically add previews for all links in messages sent by Lita.
 * `unfurl_media` (Boolean) – Set to `false` to prevent automatic previews for media files in messages sent by Lita.
 
@@ -64,7 +64,7 @@ Lita will join your default channel after initial setup. To have it join additio
 
 ## Chat service API
 
-lita-slack supports Lita 4.6's chat service API for Slack-specific functionality. You can access this API object by calling the `Lita::Robot#chat_service`. See the API docs for `Lita::Adapters::Slack::ChatService` for details about the provided methods.
+lita-slack supports Lita 4.6's chat service API for Slack-specific functionality. You can access this API object by calling the `Lita::Robot#chat_service`. See the API docs for `Lita::Adapters::Slack::ChatService` for details about the provided methods, which include attachments, rich formatting, and updating and deleting of methods.
 
 ## API documentation
 
