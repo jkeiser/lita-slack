@@ -54,9 +54,9 @@ module Lita
       end
 
       def set_topic(target, topic)
-        channel = target.room
+        channel = api.channel_for(target)
         Lita.logger.debug("Setting topic for channel #{channel}: #{topic}")
-        api.set_topic(channel, topic)
+        api.call_api("channels.setTopic", channel: channel, topic: topic)
       end
 
       def shut_down

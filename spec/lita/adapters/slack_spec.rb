@@ -229,17 +229,19 @@ describe Lita::Adapters::Slack, lita: true do
   end
 
   describe "#set_topic" do
-    let(:api) { instance_double('Lita::Adapters::Slack::API') }
-
-    before do
-      allow(Lita::Adapters::Slack::API).to receive(:new).with(subject.config).and_return(api)
-      allow(api).to receive(:set_topic).and_return(Hash.new)
+    it "set_topic with a Lita::Room sets a new topic for the room" do
+      expect_api_call("channels.setTopic", channel: 'C1234567890', topic: 'Topic')
+      subject.set_topic(Lita::Room.new('C1234567890'), 'Topic')
     end
 
-    it "sets a new topic for the room" do
-      source = instance_double("Lita::Source", room: 'C1234567890')
-      expect(api).to receive(:set_topic).with('C1234567890', 'Topic')
-      subject.set_topic(source, 'Topic')
+    it "set_topic with a Lita::Source sets a new topic for the room" do
+      expect_api_call("channels.setTopic", channel: 'C1234567890', topic: 'Topic')
+      subject.set_topic(Lita::Source.new(room: 'C1234567890'), 'Topic')
+    end
+
+    it "set_topic with a String sets a new topic for the channel" do
+      expect_api_call("channels.setTopic", channel: 'C1234567890', topic: 'Topic')
+      subject.set_topic('C1234567890', 'Topic')
     end
   end
 

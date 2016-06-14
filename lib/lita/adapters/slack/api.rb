@@ -15,10 +15,6 @@ module Lita
           @stubs = stubs
         end
 
-        def set_topic(channel, topic)
-          call_api("channels.setTopic", channel: channel, topic: topic)
-        end
-
         def rtm_start
           response_data = call_api("rtm.start")
 
