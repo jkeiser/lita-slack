@@ -2,14 +2,13 @@ require "spec_helper"
 require "support/expect_api_call"
 
 describe Lita::Adapters::Slack, lita: true do
-  subject { described_class.new(robot) }
+  include ExpectApiCall
 
-  let(:robot) { Lita::Robot.new(registry) }
+  subject { adapter }
+
   let(:rtm_connection) { instance_double('Lita::Adapters::Slack::RTMConnection') }
 
   before do
-    registry.register_adapter(:slack, described_class)
-
     allow(
       described_class::RTMConnection
     ).to receive(:build).with(robot, subject.config).and_return(rtm_connection)
@@ -50,69 +49,142 @@ describe Lita::Adapters::Slack, lita: true do
   end
 
   describe "#roster" do
-    describe "via the Web API, retrieving the roster for a channel" do
-      let(:room_source) { Lita::Source.new(room: 'C024BE91L') }
-      let(:response) do
-        {
-          ok: true,
-          channel: {
-              members: ['C024BE91L']
+    describe "retrieving the roster for a channel" do
+      let(:channel) { 'C024BE91L' }
+
+      before do
+        expect_api_call("channels.info", channel: channel,
+          response: { "ok" => true, "channel" => { "members" => %w{U07KF7HTR U07KFHN64}}}
+        )
+      end
+
+      it "returns UID(s) when passed a Lita::Room" do
+        expect(subject.roster(Lita::Room.new(channel))).to eq(%w{U07KF7HTR U07KFHN64})
+      end
+
+      it "returns UID(s) when passed a Lita::Source" do
+        expect(subject.roster(Lita::Source.new(room: channel))).to eq(%w{U07KF7HTR U07KFHN64})
+      end
+
+      it "returns UID(s) when passed a String" do
+        expect_api_call("channel.info", channel: channel)
+        expect(subject.roster(channel)).to eq(%w{U07KF7HTR U07KFHN64})
+      end
+    end
+
+    describe "retrieving the roster for a group channel" do
+      let(:channel) { 'G024BE91L' }
+
+      before do
+        expect_api_call("groups.list",
+          response: {
+            "ok" => true,
+            "groups" => [{ "id" => channel, "members" => %w{U07KF7HTR U07KFHN64}}]
           }
-        }
-      end
-      let(:api) { instance_double('Lita::Adapters::Slack::API') }
-
-      before do
-        allow(Lita::Adapters::Slack::API).to receive(:new).with(subject.config).and_return(api)
+        )
       end
 
-      it "returns UID(s)" do
-        expect(subject).to receive(:channel_roster).with(room_source.room_object.id)
-
-        subject.roster(room_source.room_object)
-      end
-    end
-
-    describe "via the Web API, retrieving the roster for a group/mpim channel" do
-      let(:room_source) { Lita::Source.new(room: 'G024BE91L') }
-      let(:response) do
-        {
-          ok: true,
-          groups: [{ id: 'G024BE91L' }]
-        }
-      end
-      let(:api) { instance_double('Lita::Adapters::Slack::API') }
-
-      before do
-        allow(Lita::Adapters::Slack::API).to receive(:new).with(subject.config).and_return(api)
+      it "returns UID(s) when passed a Lita::Room" do
+        expect(subject.roster(Lita::Room.new(channel))).to eq(%w{U07KF7HTR U07KFHN64})
       end
 
-      it "returns UID(s)" do
-        expect(subject).to receive(:group_roster).with(room_source.room_object.id).and_return(%q{})
-        expect(subject).to receive(:mpim_roster).with(room_source.room_object.id).and_return(%q{G024BE91L})
+      it "returns UID(s) when passed a Lita::Source" do
+        expect(subject.roster(Lita::Source.new(room: channel))).to eq(%w{U07KF7HTR U07KFHN64})
+      end
 
-        subject.roster(room_source.room_object)
+      it "returns UID(s) when passed a String" do
+        expect(subject.roster(channel)).to eq(%w{U07KF7HTR U07KFHN64})
       end
     end
 
-    describe "via the Web API, retrieving the roster for an im channel" do
-      let(:room_source) { Lita::Source.new(room: 'D024BFF1M') }
-      let(:response) do
-        {
-          ok: true,
-          ims: [{ id: 'D024BFF1M' }]
-        }
-      end
-      let(:api) { instance_double('Lita::Adapters::Slack::API') }
+    describe "retrieving the roster for a mpim channel" do
+      let(:channel) { 'G024BE91L' }
 
       before do
-        allow(Lita::Adapters::Slack::API).to receive(:new).with(subject.config).and_return(api)
+        expect_api_call("groups.list",
+          response: { "ok" => true, "groups" => [] }
+        )
+        expect_api_call("mpim.list",
+          response: {
+            "ok" => true,
+            "groups" => [{ "id" => channel, "members" => %w{U07KF7HTR U07KFHN64}}]
+          }
+        )
       end
 
-      it "returns UID" do
-        expect(subject).to receive(:im_roster).with(room_source.room_object.id)
+      it "returns UID(s) when passed a Lita::Room" do
+        expect(subject.roster(Lita::Room.new(channel))).to eq(%w{U07KF7HTR U07KFHN64})
+      end
 
-        subject.roster(room_source.room_object)
+      it "returns UID(s) when passed a Lita::Source" do
+        expect(subject.roster(Lita::Source.new(room: channel))).to eq(%w{U07KF7HTR U07KFHN64})
+      end
+
+      it "returns UID(s) when passed a String" do
+        expect(subject.roster(channel)).to eq(%w{U07KF7HTR U07KFHN64})
+      end
+    end
+
+    # TODO shouldn't we just throw an exception?
+    context "retrieving the roster for a non-existent group or mpim channel" do
+      let(:channel) { 'G024BE91L' }
+
+      before do
+        expect_api_call("groups.list",
+          response: { "ok" => true, "groups" => [] }
+        )
+        expect_api_call("mpim.list",
+          response: { "ok" => true, "groups" => [] }
+        )
+      end
+
+      it "returns empty list" do
+        expect(subject.roster(channel)).to eq([])
+      end
+    end
+
+    # TODO this should also return the current user in the list of
+    # channel members, yes?
+    describe "retrieving the roster for an im channel" do
+      let(:channel) { 'D024BFF1M' }
+
+      before do
+        expect_api_call("im.list",
+          response: {
+            "ok" => true,
+            "ims" => [{ "id" => channel, "user" => "U07KF7HTR"}]
+          }
+        )
+      end
+
+      it "returns UID(s) when passed a Lita::Room" do
+        expect(subject.roster(Lita::Room.new(channel))).to eq(%w{U07KF7HTR})
+      end
+
+      it "returns UID(s) when passed a Lita::Source" do
+        expect(subject.roster(Lita::Source.new(room: channel))).to eq(%w{U07KF7HTR})
+      end
+
+      it "returns UID(s) when passed a String" do
+        expect(subject.roster(channel)).to eq(%w{U07KF7HTR})
+      end
+    end
+
+    # TODO shouldn't this raise an error?
+    describe "retrieving the roster for a non-existent im channel" do
+      let(:channel) { 'D024BFF1M' }
+
+      before do
+        expect_api_call("im.list",
+          response: {
+            "ok" => true,
+            "ims" => []
+          }
+        )
+      end
+
+      it "returns empty list" do
+        expect(subject.roster(channel)).to eq([])
       end
     end
   end

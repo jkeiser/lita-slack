@@ -41,7 +41,7 @@ module Lita
       # Returns UID(s) in an Array or String for:
       # Channels, MPIMs, IMs
       def roster(target)
-        room_roster target.id
+        room_roster api.channel_for(target)
       end
 
       def send_messages(target, strings=[])
@@ -74,42 +74,45 @@ module Lita
 
       attr_reader :rtm_connection
 
-      def channel_roster(room_id)
-        response = api.channels_info room_id
+      #
+      # Returns the members of a channel.
+      #
+      # @return [Array<String>] The list of members.
+      def channel_roster(target)
+        response = api.call_api("channels.info", channel: api.channel_for(target))
         response['channel']['members']
       end
 
       # Returns the members of a group, but only can do so if it's a member
-      def group_roster(room_id)
-        response = api.groups_list
-        group = response['groups'].select { |hash| hash['id'].eql? room_id }.first
-        group.nil? ? [] : group['members']
+      def group_roster(channel)
+        response = api.call_api("groups.list")
+        group = response['groups'].find { |hash| hash['id'].eql? channel }
+        group && group['members']
       end
 
       # Returns the members of a mpim, but only can do so if it's a member
-      def mpim_roster(room_id)
-        response = api.mpim_list
-        mpim = response['groups'].select { |hash| hash['id'].eql? room_id }.first
-        mpim.nil? ? [] : mpim['members']
+      def mpim_roster(channel)
+        response = api.call_api("mpim.list")
+        mpim = response['groups'].find { |hash| hash['id'].eql? channel }
+        mpim && mpim['members']
       end
 
       # Returns the user of an im
-      def im_roster(room_id)
-        response = api.mpim_list
-        im = response['ims'].select { |hash| hash['id'].eql? room_id }.first
-        im.nil? ? '' : im['user']
+      def im_roster(channel)
+        response = api.call_api("im.list")
+        im = response['ims'].select { |hash| hash['id'].eql? channel }.first
+        im && Array(im['user'])
       end
 
-      def room_roster(room_id)
-        case room_id
+      def room_roster(channel)
+        case channel
         when /^C0/
-          channel_roster room_id
+          channel_roster(channel) || []
         when /^G0/
           # Groups & MPIMs have the same room ID pattern, check both if needed
-          roster = group_roster room_id
-          roster.empty? ? mpim_roster(room_id) : roster
+          group_roster(channel) || mpim_roster(channel) || []
         when /^D0/
-          im_roster room_id
+          im_roster(channel) || []
         end
       end
     end

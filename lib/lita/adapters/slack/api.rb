@@ -15,24 +15,8 @@ module Lita
           @stubs = stubs
         end
 
-        def channels_info(channel_id)
-          call_api("channels.info", channel: channel_id)
-        end
-
         def channels_list
           call_api("channels.list")
-        end
-
-        def groups_list
-          call_api("groups.list")
-        end
-
-        def mpim_list
-          call_api("mpim.list")
-        end
-
-        def im_list
-          call_api("im.list")
         end
 
         def set_topic(channel, topic)
