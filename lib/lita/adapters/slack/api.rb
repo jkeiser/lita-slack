@@ -15,12 +15,6 @@ module Lita
           @stubs = stubs
         end
 
-        def im_open(user_id)
-          response_data = call_api("im.open", user: user_id)
-
-          SlackIM.new(response_data["channel"]["id"], user_id)
-        end
-
         def channels_info(channel_id)
           call_api("channels.info", channel: channel_id)
         end

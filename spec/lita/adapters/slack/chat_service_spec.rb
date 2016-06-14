@@ -4,17 +4,11 @@ require "support/expect_api_call"
 describe Lita::Adapters::Slack::ChatService, lita: true do
   subject { described_class.new(adapter.config) }
 
-  let(:adapter) { Lita::Adapters::Slack.new(robot) }
-  let(:robot) { Lita::Robot.new(registry) }
   let(:channel) { "C2147483705" }
   let(:room) { Lita::Room.new(channel) }
   let(:username) { "TESTUSER"}
   let(:user) { Lita::User.new(username)}
   let(:room_source) { Lita::Source.new(room: channel) }
-
-  before do
-    registry.register_adapter(:slack, Lita::Adapters::Slack)
-  end
 
   include ExpectApiCall
 

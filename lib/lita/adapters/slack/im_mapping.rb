@@ -20,8 +20,8 @@ module Lita
 
         def im_for(user_id)
           mapping.fetch(user_id) do
-            im = api.im_open(user_id)
-            mapping[user_id] = im.id
+            response = api.call_api("im.open", user: user_id)
+            add_mapping(SlackIM.new(response["channel"]["id"], user_id))
           end
         end
 

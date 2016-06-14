@@ -6,6 +6,12 @@
    def stubs
      @stubs ||= Faraday::Adapter::Test::Stubs.new
    end
+   def adapter
+     @adapter ||= Lita::Adapters::Slack.new(robot)
+   end
+   def robot
+     @robot ||= Lita::Robot.new(registry)
+   end
 
    def expect_api_call(method, response: { "ok" => true }, token: self.token, **arguments)
      stubs.post("https://slack.com/api/#{method}", token: token, **arguments) do
@@ -15,6 +21,7 @@
 
    def self.included(other)
      other.before do
+       registry.register_adapter(:slack, Lita::Adapters::Slack)
        registry.config.adapters.slack.token = token
        allow_any_instance_of(Lita::Adapters::Slack::API).to receive(:stubs).and_return(stubs)
      end
