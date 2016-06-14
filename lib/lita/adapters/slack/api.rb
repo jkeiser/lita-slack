@@ -15,10 +15,6 @@ module Lita
           @stubs = stubs
         end
 
-        def channels_list
-          call_api("channels.list")
-        end
-
         def set_topic(channel, topic)
           call_api("channels.setTopic", channel: channel, topic: topic)
         end
